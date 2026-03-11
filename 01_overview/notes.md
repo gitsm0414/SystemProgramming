@@ -102,6 +102,7 @@ section: page의 소속구분 1, 2, 3
 행이동: G(맨 마지막 줄) #G(#번째 줄로 이동)또는 :행번호 (:3)
 
 undo: u
+redo: <Ctrl> + r
 
 저장: w (:wq 저장하고 종료)
 종료: q (:q! 저장안하고 종료)
@@ -110,4 +111,79 @@ undo: u
 붙여넣기: p
 
 글자삭제: x, #x
-행삭제(잘라내기): dd, #dd
+행삭제(잘라내기): dd, #
+
+
+<GNU C compiler>
+
+$gcc [options] filename
+-c: 오브젝트파일(.o) 생성
+-o: 이름 설정( 기본은 a.out )
+
+
+<Makefile & make>
+>>실수 방지 및 수정된 파일만 컴파일에 포함시킴으로써 최적화
+
+Makefile 형식
+<target>: <dependencies>
+    <recipe>
+...
+
+이후에 $make
+
+
+implicit rules
+-(.c)파일을 (.o)파일까지 컴파일하는 규칙은 target: dependencies만 명시해줘도 된다.
+-단, 최종 결과물의 형식은 전부 상세히 적는다.
+
+
+Variablefs(or Macro)
+ex)
+CC = gcc
+CFLAGS = -g -Wall
+OBJS = main.o foo.o bar.o
+TARGET = app.out
+
+all: $(TARGET)  #make를 할 때 가장 먼저 보는 녀석. 타겟을 적는것이 일반적인 패턴
+
+$(TARGET): $(OBJS)
+    $(CC) $(CFLAGS) -o $@ $(OBJS)  # $@는 current target name을 뜻하는 automatic variable이다.
+
+main.o: foo.h bar.h main.c
+foo.o: foo.h foo.c
+bar.o: bar.h bar.c
+
+clean:  #clean을 수행할 때는 make clean이라 명령한다.
+    rm -f *.o
+    rm -f $(TARGET)
+
+
+
+<Makefile basic pattern>
+
+CC = <compiler>
+CFLAGS = <options for compiler>
+LDFLAGS = <options for linker>
+LDLIBS = <a list of library to link>
+OBJS = <a list of object file>
+TARGET = <build target name>
+
+all: $(TARGET)
+
+clean:
+    rm -f *.o
+    rm -f $(TARGET)
+
+$(TARGET): $(OBJS)
+    $(CC) $(CFLAGS) -o $@ $(OBJS)
+
+...이후 하위 타겟에 대해서는 target: dependencies 관계를 적어준다.
+
+cf.
+$@: name of the target of the rule
+$^: name of all the dependencies of the rule (dependencies = prerequisites)
+
+
+cf. CMake
+-Makefile을 자동으로 생성해주고, 기타 유용한 기능을 제공한다. (예. 라이브러리 탐색)
+-주로 오픈소스를 활용할 때 필요하다.
