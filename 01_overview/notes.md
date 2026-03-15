@@ -63,6 +63,7 @@ ex) mv hello.txt systemProgramming/
 
 rm <파일/디렉토리>: 파일/디렉토리 삭제
 -r: 디렉토리 삭제
+-f: 강제수행. 사용자확인절차를 거치지 않고 바로 삭제한다.
 
 mkdir, rmdir: 빈 디렉토리 생성, 삭제
 
@@ -93,6 +94,7 @@ Shell command(1), system call(2), standard library(3)에 대한 상세설명 제
 $man [options] [section] page
 page: 검색하려는 명령어/함수 이름
 section: page의 소속구분 1, 2, 3
+-s: 섹션을 지정해서 검색하겠다는 옵션이다.
 
 
 <VI editor>
@@ -140,7 +142,7 @@ implicit rules
 Variablefs(or Macro)
 ex)
 CC = gcc
-CFLAGS = -g -Wall
+CFLAGS = -g -Wall //-g gdb같은 디버깅툴을 위한 밑작업을 함. 대신 파일크기가 커짐. 그래서 보통 개발할때만 사용하는 옵션
 OBJS = main.o foo.o bar.o
 TARGET = app.out
 
