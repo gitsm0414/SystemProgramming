@@ -54,7 +54,7 @@ a+: 덧붙이기, 추후 읽기모드로 전환가능
 >>여기서 주의점: 읽기/쓰기 모드 전환시 반드시 다음의 함수 중 하나를 호출해야 함.
 fflush(), fseek(), fstepos(), rewind()
 
-b: 이진 파일 모드. 읽기/쓰기 모드는 위에 나온 표현 뒤에 b를 붙인다. 예를들어 rb, wb 등.
+b: 이진 파일 모드. 읽기/쓰기 모드는 위에 나온 표현 뒤에 b를 붙인다. 예를들어 rb, wb+ 등.
 binary file은 text file에 비해 효율이 좋다. 비록 우리가 이해할 수 있는 형태는 아니지만.
 
 <fclose(3)>
@@ -110,7 +110,7 @@ size_t fread(void* ptr, size_t size, size_t memb, FILE* stream);
 size_t fwrite(const void* ptr, size_t size, size_t memb, FILE* stream);
 //ptr에서 크기가 size인 아이템을 memb수 만큼 읽어와서 stream에 저장하겠다.
 
-return: read/write 한 item의 수 / 혹은 EOF를 리턴
+return: read/write 한 item의 수 (EOF는 -1이므로 fread, fwrite는 EOF를 리턴하지 않는다.)
 
 
 cf. binary 파일의 내용을 16진수로 보고싶다면 xxd hello.bin 이런 명령어를 사용하면 된다.
@@ -122,3 +122,119 @@ cf. fprintf(stderr, "Fail to open the file - %s\n", filename);
 나타나게끔 할 수 있다. perror()도 마찬가지 맥락이다. 결국은 stderr를 활용한다는게 중요하다.
 
 
+<ASKII vs binary>
+text file
+-사람이 바로 읽을 수 있음
+-데이터 저장 및 사용 시 변환과정이 필요함. 따라서 효율 감소
+-필요 저장공간도 늘어남. 예를들어 1234.56789는 text file에서 10 bytes, 이진파일에서 4 bytes이다.
+>>따라서 많은 양의 데이터 처리에는 비효율적이다.
+
+binary file
+-별도의 변환과정이 필요없어, 시간/공간 적으로 효율적이다.
+-다만 사람이 읽을 수 없는 형태이므로 데이터 교환 시 약속(protocol)이 필요함.
+
+
+
+<formatted IO>
+int fscanf(FILE* stream, const char* format, ...);
+int fprintf(FILE* stream, const char* format, ...);
+리턴: 입출력한 문자 수 | 음수: error
+
+
+<fflush()>: man -s 3 fflush
+int fflush(FILE* stream);
+fflush는 유저공간의 버퍼를 비워 커널 공간의 버퍼로 옮기는 작업이다. 이후는 커널에게 달려있기 때문에
+디스크에 동기화됐는지는 알 수 없다.
+stream이 가리키는 버퍼의 내용을 모두 비운다.
+성공시 0을 반환하고, 실패시 EOF를 반환하며 errno가 설정된다.
+
+
+<setvbuf()>: man -s 3 setvbuf
+int setvbuf(FILE* stream, char* buf, int mode, size_t size);
+stream: 설정을 변경할 파일포인터, 예: stdout, fp, ...
+buf: 사용자가 할당한 버퍼 메모리 주소, NULL일 경우 시스템이 알아서 할당
+mode: 버퍼링의 종류
+size: 버퍼의 크기
+
+모드:
+_IOFBF: full buffering. 버퍼가 꽉차야만 비움. 파일기록 시 성능 최적화에 도움
+_IOLBF: line buffering. \n을 만나면 버퍼 비움. 주로 콘솔(터미널)출력 등 사용
+_IONBF: no buffering. 버퍼를 쓰지 않음. 즉시 입출력. 주로 stderr등에 쓰임
+
+ex) 성능 최적화를 위한 큰 버퍼 설정
+char mybuf[8192];
+setvbuf(fp, mybuf, _IOFBF, 8192);
+
+주의사항:
+1. fopen으로 열고 난 직후, 그리고 첫번째 입출력함수를 사용하기 전에, 즉 그 사이에 설정을 해줘야함. 안그럼 적용 안될수도.
+2. 사용자 지정 버퍼를 지역변수로 만들어 함수에 보내면 고려해야할 것들이 많다. 그래서 웬만하면 NULL을 전달하는 걸 추천.
+
+
+
+<Handling file offset(high level)>: lseek()과 헷갈리지 말기
+
+long fseek(FILE* stream, long offset, int whence);
+whence로부터 offset만큼 오프셋을 이동시킨다.
+whence: SEEK_SET, SEEK_END, SEEK_CUR
+
+long ftell(FILE* stream); // 현재 오프셋의 위치를 알려줘
+void rewind(FILE* stream); // 오프셋 되감기, 맨 처음으로
+
+
+//파일의 크기가 2GB를 넘긴다면 fseek, ftell로 포지션범위를 다 표현하지 못한다.
+//아래 함수들은 크고 복잡한 파일을 유연하게 다루기에 유리하다. 포지션을 따로 fpos_t라는 타입에 저장하기 때문이다.
+
+int fgetpos(FILE* stream, fpos_t* pos);
+현재 파일포인터의 위치 정보를 pos 변수에 저장한다. 성공 시 0, 아니면 그외 값 및 errno를 설정한다.
+
+int fsetpos(FILE* stream, const fpos_t* pos);
+fgetpos로 pos에 저장해둔 값을 바탕으로 파일 포인터를 해당위치로 복구시킨다. 성공 시 0, 아니면 그외 값 및 errno를 설정한다.
+
+
+<fd ~ fp>
+FILE* fdopen(int fd, const char* mode); //file discriptor open
+
+open을 이용해 low-level에서 열었던 파일을 high-level에서 다룰 수 있도록 파일포인터를 생성해 반환해준다.
+이때 모드는 fd로 열었을 때의 모드와 동일해야한다.
+리턴 값은 fp 또는 NULL이다.
+
+int fileno(FILE* stream); // file number
+
+fp로 열었던 파일의 fd값을 반환해줌으로써 low-level에서 파일을 다룰 수 있게끔 한다.
+리턴값은 fd값 혹은 -1이다.
+
+
+cf. fd -> fdopen을 호출하는 순간 fd는 FILE 구조체(스트림)안에 포섭되게 된다. 따라서 파일을 닫을 때는
+close(fd)가 아니라 fclose(fp)를 사용한다. 이러면 자동적으로 파일이 가지고 있던 사용자 버퍼를 비우고
+메모리를 해제하며, close(fd)시스템 콜을 자동으로 호출한다.
+
+따라서 온전히 low-level만 존재하는게 아닌 이상은 무조건 fclose를 이용하자.
+
+또한 close()이후 fclose()를 사용해서도 안된다. 그러면 결과적으로 close(fd)가 이미 됐는데도 한번 더 실행되어 오류가 날 수 있다.
+
+그냥 기억하자 high-level 건드린 적 있으면 fclose()만 사용해서 닫아라.
+
+
+ <temporal file>:임시 파일
+ char* tmpnam(char* s); // temp name
+ >> 중복되지 않는 임시파일 명을 알아서 생성해서 s에 저장함
+ >> 경로를 맘대로 못바꾸고, 보안상 취약점이 있어 쓰지 않는 걸 추천
+
+ char* tempnam(const char* dir, const char* pfx);
+ dir: 임시파일을 생성할 디렉토리 경로를 지정. 만약 NULL을 넘기거나 유효하지 않으면 시스템 기본 경로를 사용한다.
+ pfx: 파일명 앞에 붙는 접두어. 최대 5글자.
+ >>생성된 임시파일명은 malloc으로 동적할당되어 저장된다. 따라서 나중에 free()해줘야 한다.
+
+ 하지만 이름만 생성해주기 때문에 파일을 여는건 직접 해야한다. 하지만 그 찰나의 사이 순간에 여러개의 프로세스들이 동시에 같은 이름을
+ 가지고 파일을 만들려하는 순간 위험하기 때문에.. 이름생성과 파일 오픈을 동시에 해주는 mkstemp()를 쓰는걸 권장한다.
+
+
+FILE* tmpfile(); //실패시 NULL 
+>> 중복되지 않는 임시 파일을 생성하고 파일 포인터를 리턴한다. 그 파일은 "wb+"모드로 열린다.
+>> 자동 삭제라는 특징을 갖고있다. fclose로 수동으로 닫아도 되지만, 프로그램이 정상적으로 종료된다면 알아서 삭제된다.
+
+
+student_info.c 참고
+scanf("%s\n", buf); 이경우 스트링을 받을 때 개행문자를 만나도 계속 진행한다. 즉 공백문자가 아닌문자가 나오기 전까지 계속 받는것이다.
+따라서 의도대로 작동하지 않는다. 이 경우 \n을 지우고 그 다음 줄에 getchar();로 개행문자를 비워냄으로써 정상작동할 수 있다.
+    

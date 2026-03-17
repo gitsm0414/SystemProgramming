@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -g -Wall
-TARGET = stringIO.out
-OBJS = stringIO.o
+TARGET = student_info.out
+OBJS = student_info.o
 
 all: $(TARGET)
 
@@ -13,4 +13,4 @@ clean:
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
-stringIO.o: stringIO.c
+student_info.o: student_info.c
