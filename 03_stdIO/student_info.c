@@ -23,8 +23,11 @@ void addStudentInfo(FILE* _fp, Student* _info);
 long findStudent(FILE* _fp, Student* _info);
 
 int main(void){
-	FILE* fp = NULL;
+	FILE* fp = NULL; //NULL로 초기화 하지 않으면 garbage값이 안없어진다. 만약 이상태에서 fopen이 실패한다면
+	//if(fp == NULL) 이런 체크과정도 그냥 통과해버리고 이 상태에서 파일 접근하면 프로그램 즉시종료됨(segmentation fault)
+	//포인터 변수를 선언과 동시에 유효한 주소를 넣을 수 없다면 NULL로 할당해주는 것이 C언어의 관례
 	Student data = {0};
+	//모든 멤버를 0 또는 NULL로 초기화
 	fileOpen(&fp, "StudentDB", "ab+");
 
 	while(1){
@@ -50,6 +53,10 @@ int main(void){
 만약 열기에 실패할 경우 -1, 성공하면 0을 리턴한다.
 */
 int fileOpen(FILE** _fp, char* _filename, char* _mode){
+	/*
+	여기선 포인터가 가리키는 곳의 주소가 아니라, 포인터 변수 자체에 값을 새로 할당해야하기 때문에 포인터의 주소를 넘긴다. 즉 이중 포인터로 넘긴다.
+	그냥 포인터로 넘기면 call-by-value가 되서 내부변수만 바뀌고 겉에있는 fp 는 여전히 NULL이게 된다.
+	*/
 	*_fp = fopen(_filename, _mode);
 	if(!*_fp){
 		printf("fail to open - %s\n", _filename);
