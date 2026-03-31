@@ -24,6 +24,7 @@ int main(){
 	
 	cwd = getcwd(NULL, BUFSIZ);
 	printf("1. Current directory: %s\n", cwd);
+	free(cwd);
 
 	chdir("new_a"); //절대경로도 되고 상대경로도 된다.
 	

@@ -10,7 +10,7 @@ int main(void) {
 
     printf("Inode = %d\n", (int)buf.st_ino);
     printf("Mode = %o\n", (unsigned int)buf.st_mode); //mode값은 8진수로 표현하는것이 관례
-    printf("Nlink = %o\n", (unsigned int)buf.st_nlink);
+    printf("Nlink = %lu\n", (unsigned long)buf.st_nlink);
     printf("UID = %d\n", (int)buf.st_uid);
     printf("GID = %d\n", (int)buf.st_gid);
     printf("SIZE = %d\n", (int)buf.st_size);

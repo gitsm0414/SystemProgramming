@@ -13,7 +13,7 @@ int main(void){
     
     printf("1. stat: linux.txt ---\n");
     stat("linux.txt", &buf);
-    PRINT_CNT_INODE;
+    PRINT_CNT_INODE; 
 
     printf("2. stat: linux.sym ---\n");
     stat("linux.sym", &buf); //최종목적 파일인 linux.txt를 읽어온다.

@@ -1,7 +1,10 @@
+#define _XOPEN_SOURCE // 또는 #define _DEFAULT_SOURCE
 #include <stdio.h>
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
+
+
 
 int main() {
     time_t t;
@@ -24,8 +27,8 @@ int main() {
     printf("Timezone Name: %s, %s\n", tzname[0], tzname[1]);
     
     // timezone 전역 변수는 UTC와의 차이를 '초' 단위로 나타냄
-    // 한국(KST)은 UTC+9 이므로 -32400 (9 * 3600)이 출력됨 (서쪽이 +, 동쪽이 - 기준)
-    printf("Difference from UTC: %ld hours\n", -timezone / 3600);
+    // 한국(KST)은 UTC+9 이므로 -32400 (9 * 3600)이 출력됨
+    printf("Difference from UTC: %ld hours\n", timezone / 3600);
     printf("Daylight: %d\n", daylight);
 
     // 4. 간단한 실행 시간 측정 실습

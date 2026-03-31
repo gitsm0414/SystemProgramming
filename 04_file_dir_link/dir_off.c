@@ -20,8 +20,7 @@ int main(void){
 	while((dent =readdir(dp))){
 		printf("Read: %s ", dent->d_name);
 		printf("Cur offset: %ld\n", telldir(dp));
-		//여기서 cur offset은 해당 while문의 entry를 읽고나서
-		//다음 offset값으로 설정 된 후의 값이다.
+		//여기서 cur offset은 다음으로 읽어들일 entry의 offset값이다.
 	}
 
 	printf("** Directory pointer rewind **\n");
